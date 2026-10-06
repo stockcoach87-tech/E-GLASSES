@@ -7,6 +7,14 @@ import {
     createClient
 } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
+import {
+    exportCustomersToExcel
+} from "./excel.js";
+
+
+/* =========================================================
+   SUPABASE
+========================================================= */
 
 const supabase = createClient(
     SUPABASE_URL,
@@ -14,73 +22,238 @@ const supabase = createClient(
 );
 
 
+/* =========================================================
+   GLOBAL STATE
+========================================================= */
+
+let currentUser = null;
+let currentProfile = null;
+
 let allCustomers = [];
 let allStaff = [];
 
 
-/* -----------------------------
+/* =========================================================
+   DOM HELPERS
+========================================================= */
+
+const $ = (id) =>
+    document.getElementById(id);
+
+
+/* =========================================================
    INITIALIZATION
------------------------------- */
+========================================================= */
 
 async function initializeAdmin() {
 
-    const {
-        data: {
-            user
+    try {
+
+        setStatus(
+            "tableStatus",
+            "Checking account..."
+        );
+
+
+        /*
+         * Get currently logged-in user
+         */
+
+        const {
+            data: userData,
+            error: userError
+        } = await supabase.auth.getUser();
+
+
+        if (userError) {
+            throw userError;
         }
-    } = await supabase.auth.getUser();
 
 
-    if (!user) {
+        currentUser =
+            userData?.user || null;
 
-        window.location.href =
-            "login.html";
 
-        return;
+        /*
+         * No login
+         */
+
+        if (!currentUser) {
+
+            redirectToLogin();
+
+            return;
+        }
+
+
+        /*
+         * Load profile
+         */
+
+        const {
+            data: profile,
+            error: profileError
+        } = await supabase
+            .from("profiles")
+            .select(`
+                id,
+                full_name,
+                mobile,
+                role,
+                active
+            `)
+            .eq(
+                "id",
+                currentUser.id
+            )
+            .single();
+
+
+        if (profileError) {
+            throw profileError;
+        }
+
+
+        currentProfile = profile;
+
+
+        /*
+         * Security check
+         */
+
+        if (
+            !currentProfile ||
+            currentProfile.role !== "admin" ||
+            currentProfile.active !== true
+        ) {
+
+            await supabase.auth.signOut();
+
+            alert(
+                "You do not have permission to access the admin panel."
+            );
+
+            redirectToLogin();
+
+            return;
+        }
+
+
+        /*
+         * Update admin identity
+         */
+
+        updateAdminIdentity();
+
+
+        /*
+         * Load application data
+         */
+
+        await Promise.all([
+            loadStaff(),
+            loadCustomers()
+        ]);
+
+
+        /*
+         * Update dashboard
+         */
+
+        updateDashboardStats();
+
+
+        /*
+         * Render customer table
+         */
+
+        renderCustomers(
+            getFilteredCustomers()
+        );
+
+
+        /*
+         * Current date
+         */
+
+        updateCurrentDate();
+
+
+        setStatus(
+            "tableStatus",
+            `${allCustomers.length} records`
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Admin initialization error:",
+            error
+        );
+
+
+        setStatus(
+            "tableStatus",
+            "Unable to load data"
+        );
+
+
+        alert(
+            getErrorMessage(error)
+        );
+    }
+}
+
+
+/* =========================================================
+   ADMIN PROFILE UI
+========================================================= */
+
+function updateAdminIdentity() {
+
+    const adminName =
+        $("adminName");
+
+    if (adminName) {
+
+        adminName.textContent =
+            currentProfile?.full_name ||
+            "Administrator";
     }
 
 
-    const {
-        data: profile,
-        error: profileError
-    } = await supabase
-        .from("profiles")
-        .select(`
-            id,
-            full_name,
-            mobile,
-            role,
-            active
-        `)
-        .eq("id", user.id)
-        .single();
+    const avatar =
+        document.querySelector(
+            ".admin-avatar"
+        );
 
 
     if (
-        profileError ||
-        !profile ||
-        profile.role !== "admin" ||
-        !profile.active
+        avatar &&
+        currentProfile?.full_name
     ) {
 
-        await supabase.auth.signOut();
+        avatar.textContent =
+            getInitial(
+                currentProfile.full_name
+            );
+    }
+}
 
-        window.location.href =
-            "login.html";
 
+function updateCurrentDate() {
+
+    const element =
+        $("currentDate");
+
+
+    if (!element) {
         return;
     }
 
 
-    document.getElementById(
-        "adminName"
-    ).textContent =
-        profile.full_name || "Admin";
-
-
-    document.getElementById(
-        "currentDate"
-    ).textContent =
+    element.textContent =
         new Intl.DateTimeFormat(
             "en-IN",
             {
@@ -89,20 +262,12 @@ async function initializeAdmin() {
         ).format(
             new Date()
         );
-
-
-    await Promise.all([
-        loadStaff(),
-        loadCustomers()
-    ]);
-
-    updateDashboardStats();
 }
 
 
-/* -----------------------------
+/* =========================================================
    LOAD STAFF
------------------------------- */
+========================================================= */
 
 async function loadStaff() {
 
@@ -118,6 +283,10 @@ async function loadStaff() {
             role,
             active
         `)
+        .eq(
+            "role",
+            "staff"
+        )
         .order(
             "full_name",
             {
@@ -133,28 +302,55 @@ async function loadStaff() {
             error
         );
 
-        return;
+        throw error;
     }
 
 
     allStaff =
-        data.filter(
-            staff =>
-                staff.role === "staff"
+        Array.isArray(data)
+            ? data
+            : [];
+
+
+    populateStaffFilter();
+
+    renderStaffCards();
+}
+
+
+/* =========================================================
+   STAFF FILTER
+========================================================= */
+
+function populateStaffFilter() {
+
+    const select =
+        $("staffFilter");
+
+
+    if (!select) {
+        return;
+    }
+
+
+    select.innerHTML = "";
+
+
+    const allOption =
+        document.createElement(
+            "option"
         );
 
 
-    const staffFilter =
-        document.getElementById(
-            "staffFilter"
-        );
+    allOption.value = "";
+
+    allOption.textContent =
+        "All Staff";
 
 
-    staffFilter.innerHTML = `
-        <option value="">
-            All Staff
-        </option>
-    `;
+    select.appendChild(
+        allOption
+    );
 
 
     allStaff.forEach(
@@ -165,31 +361,33 @@ async function loadStaff() {
                     "option"
                 );
 
+
             option.value =
                 staff.id;
 
-            option.textContent =
-                staff.full_name;
 
-            staffFilter.appendChild(
+            option.textContent =
+                staff.full_name ||
+                "Unnamed Staff";
+
+
+            select.appendChild(
                 option
             );
         }
     );
-
-
-    renderStaffCards();
 }
 
 
-/* -----------------------------
+/* =========================================================
    LOAD CUSTOMERS
------------------------------- */
+========================================================= */
 
 async function loadCustomers() {
 
-    setTableStatus(
-        "Loading..."
+    setStatus(
+        "tableStatus",
+        "Loading customers..."
     );
 
 
@@ -207,12 +405,13 @@ async function loadCustomers() {
             product_type,
             purchase_status,
             purchase_details,
-            created_at,
             staff_id,
+            created_at,
             profiles:staff_id (
                 id,
                 full_name,
-                mobile
+                mobile,
+                role
             )
         `)
         .order(
@@ -230,153 +429,186 @@ async function loadCustomers() {
             error
         );
 
-        setTableStatus(
-            "Database error"
-        );
-
-        return;
+        throw error;
     }
 
 
     allCustomers =
-        data || [];
-
-
-    renderCustomers(
-        getFilteredCustomers()
-    );
+        Array.isArray(data)
+            ? data
+            : [];
 }
 
 
-/* -----------------------------
-   FILTERING
------------------------------- */
+/* =========================================================
+   FILTER CUSTOMERS
+========================================================= */
 
 function getFilteredCustomers() {
 
     const search =
-        document
-            .getElementById(
-                "searchInput"
-            )
-            .value
-            .trim()
-            .toLowerCase();
+        (
+            $("searchInput")?.value ||
+            ""
+        )
+        .trim()
+        .toLowerCase();
 
 
     const fromDate =
-        document.getElementById(
-            "fromDate"
-        ).value;
+        $("fromDate")?.value || "";
 
 
     const toDate =
-        document.getElementById(
-            "toDate"
-        ).value;
+        $("toDate")?.value || "";
 
 
     const staffId =
-        document.getElementById(
-            "staffFilter"
-        ).value;
+        $("staffFilter")?.value || "";
 
 
     const reason =
-        document.getElementById(
-            "reasonFilter"
-        ).value;
+        $("reasonFilter")?.value || "";
 
 
     const purchase =
-        document.getElementById(
-            "purchaseFilter"
-        ).value;
+        $("purchaseFilter")?.value || "";
 
 
     return allCustomers.filter(
         entry => {
 
-            const customerName =
-                (
-                    entry.customer_name ||
-                    ""
-                ).toLowerCase();
+
+            /*
+             * Search
+             */
+
+            if (search) {
+
+                const customerName =
+                    String(
+                        entry.customer_name || ""
+                    ).toLowerCase();
 
 
-            const mobile =
-                (
-                    entry.mobile ||
-                    ""
-                ).toLowerCase();
+                const mobile =
+                    String(
+                        entry.mobile || ""
+                    ).toLowerCase();
 
 
-            if (
-                search &&
-                !customerName.includes(search) &&
-                !mobile.includes(search)
-            ) {
-                return false;
-            }
+                const purchaseDetails =
+                    String(
+                        entry.purchase_details || ""
+                    ).toLowerCase();
 
 
-            if (
-                staffId &&
-                entry.staff_id !== staffId
-            ) {
-                return false;
-            }
+                const matchesSearch =
+                    customerName.includes(search) ||
+                    mobile.includes(search) ||
+                    purchaseDetails.includes(search);
 
 
-            if (
-                reason &&
-                entry.visit_reason !== reason
-            ) {
-                return false;
-            }
-
-
-            if (
-                purchase &&
-                entry.purchase_status !== purchase
-            ) {
-                return false;
-            }
-
-
-            const entryDate =
-                new Date(
-                    entry.created_at
-                );
-
-
-            if (fromDate) {
-
-                const start =
-                    new Date(
-                        `${fromDate}T00:00:00`
-                    );
-
-
-                if (
-                    entryDate < start
-                ) {
+                if (!matchesSearch) {
                     return false;
                 }
             }
 
 
-            if (toDate) {
+            /*
+             * Staff
+             */
 
-                const end =
+            if (
+                staffId &&
+                entry.staff_id !== staffId
+            ) {
+
+                return false;
+            }
+
+
+            /*
+             * Visit reason
+             */
+
+            if (
+                reason &&
+                entry.visit_reason !== reason
+            ) {
+
+                return false;
+            }
+
+
+            /*
+             * Purchase
+             */
+
+            if (
+                purchase &&
+                entry.purchase_status !== purchase
+            ) {
+
+                return false;
+            }
+
+
+            /*
+             * Date
+             */
+
+            const entryTime =
+                new Date(
+                    entry.created_at
+                ).getTime();
+
+
+            if (
+                Number.isNaN(entryTime)
+            ) {
+
+                return false;
+            }
+
+
+            /*
+             * From date
+             */
+
+            if (fromDate) {
+
+                const fromTime =
                     new Date(
-                        `${toDate}T23:59:59`
-                    );
+                        `${fromDate}T00:00:00`
+                    ).getTime();
 
 
                 if (
-                    entryDate > end
+                    entryTime < fromTime
                 ) {
+
+                    return false;
+                }
+            }
+
+
+            /*
+             * To date
+             */
+
+            if (toDate) {
+
+                const toTime =
+                    new Date(
+                        `${toDate}T23:59:59.999`
+                    ).getTime();
+
+
+                if (
+                    entryTime > toTime
+                ) {
+
                     return false;
                 }
             }
@@ -388,32 +620,40 @@ function getFilteredCustomers() {
 }
 
 
-/* -----------------------------
-   RENDER CUSTOMERS
------------------------------- */
+/* =========================================================
+   RENDER CUSTOMER TABLE
+========================================================= */
 
 function renderCustomers(
     customers
 ) {
 
     const tbody =
-        document.getElementById(
-            "customersTableBody"
-        );
+        $("customersTableBody");
 
 
-    const count =
-        document.getElementById(
-            "resultCount"
-        );
+    const resultCount =
+        $("resultCount");
+
+
+    if (!tbody) {
+        return;
+    }
 
 
     tbody.innerHTML = "";
 
 
-    count.textContent =
-        `${customers.length} records`;
+    if (resultCount) {
 
+        resultCount.textContent =
+            `${customers.length} records`;
+    }
+
+
+    /*
+     * Empty state
+     */
 
     if (!customers.length) {
 
@@ -425,13 +665,20 @@ function renderCustomers(
             </tr>
         `;
 
-        setTableStatus(
+
+        setStatus(
+            "tableStatus",
             "No matching records"
         );
+
 
         return;
     }
 
+
+    /*
+     * Rows
+     */
 
     customers.forEach(
         entry => {
@@ -448,31 +695,69 @@ function renderCustomers(
                 );
 
 
+            const staff =
+                entry.profiles || null;
+
+
+            const customerName =
+                escapeHTML(
+                    entry.customer_name ||
+                    "Unknown Customer"
+                );
+
+
+            const mobile =
+                escapeHTML(
+                    entry.mobile ||
+                    "-"
+                );
+
+
+            const gender =
+                escapeHTML(
+                    capitalize(
+                        entry.gender ||
+                        "-"
+                    )
+                );
+
+
             const reason =
-                formatReason(
-                    entry.visit_reason
+                escapeHTML(
+                    formatReason(
+                        entry.visit_reason
+                    )
                 );
 
 
             const product =
-                formatProduct(
-                    entry.product_type
+                escapeHTML(
+                    formatProduct(
+                        entry.product_type
+                    )
                 );
 
 
             const staffName =
-                entry.profiles?.full_name ||
-                "Unknown";
+                escapeHTML(
+                    staff?.full_name ||
+                    "Unknown"
+                );
+
+
+            const purchase =
+                entry.purchase_status ===
+                "yes";
 
 
             row.innerHTML = `
 
                 <td>
+
                     <div class="customer-cell">
+
                         <strong>
-                            ${escapeHTML(
-                                entry.customer_name
-                            )}
+                            ${customerName}
                         </strong>
 
                         <span>
@@ -481,21 +766,19 @@ function renderCustomers(
                                 "Customer record"
                             )}
                         </span>
+
                     </div>
+
                 </td>
 
 
                 <td>
-                    ${escapeHTML(
-                        entry.mobile || "-"
-                    )}
+                    ${mobile}
                 </td>
 
 
                 <td>
-                    ${capitalize(
-                        entry.gender || "-"
-                    )}
+                    ${gender}
                 </td>
 
 
@@ -513,15 +796,11 @@ function renderCustomers(
 
                     <span class="
                         badge
-                        ${
-                            entry.purchase_status === "yes"
-                                ? "yes"
-                                : "no"
-                        }
+                        ${purchase ? "yes" : "no"}
                     ">
 
                         ${
-                            entry.purchase_status === "yes"
+                            purchase
                                 ? "Yes"
                                 : "No"
                         }
@@ -532,27 +811,17 @@ function renderCustomers(
 
 
                 <td>
-                    ${escapeHTML(
-                        staffName
-                    )}
+                    ${staffName}
                 </td>
 
 
                 <td>
-                    ${date.toLocaleDateString(
-                        "en-IN"
-                    )}
+                    ${formatDate(date)}
                 </td>
 
 
                 <td>
-                    ${date.toLocaleTimeString(
-                        "en-IN",
-                        {
-                            hour: "2-digit",
-                            minute: "2-digit"
-                        }
-                    )}
+                    ${formatTime(date)}
                 </td>
 
             `;
@@ -565,37 +834,84 @@ function renderCustomers(
     );
 
 
-    setTableStatus(
+    setStatus(
+        "tableStatus",
         `${customers.length} records`
     );
 }
 
 
-/* -----------------------------
+/* =========================================================
    DASHBOARD STATS
------------------------------- */
+========================================================= */
 
 function updateDashboardStats() {
 
-    const todayStart =
+    /*
+     * Total
+     */
+
+    const totalCustomers =
+        allCustomers.length;
+
+
+    /*
+     * Today's start
+     */
+
+    const now =
         new Date();
 
-    todayStart.setHours(
-        0,
-        0,
-        0,
-        0
-    );
 
+    const startOfToday =
+        new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            0,
+            0,
+            0,
+            0
+        );
+
+
+    const endOfToday =
+        new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            23,
+            59,
+            59,
+            999
+        );
+
+
+    /*
+     * Today's visits
+     */
 
     const todayVisits =
         allCustomers.filter(
-            entry =>
-                new Date(
-                    entry.created_at
-                ) >= todayStart
+            entry => {
+
+                const date =
+                    new Date(
+                        entry.created_at
+                    );
+
+
+                return (
+                    date >= startOfToday &&
+                    date <= endOfToday
+                );
+            }
         ).length;
 
+
+    /*
+     * Purchases
+     */
 
     const purchases =
         allCustomers.filter(
@@ -605,48 +921,59 @@ function updateDashboardStats() {
         ).length;
 
 
+    /*
+     * Active staff
+     */
+
     const activeStaff =
         allStaff.filter(
             staff =>
-                staff.active
+                staff.active === true
         ).length;
 
 
-    document.getElementById(
-        "totalCustomers"
-    ).textContent =
-        allCustomers.length;
+    /*
+     * Update UI
+     */
+
+    setText(
+        "totalCustomers",
+        totalCustomers
+    );
 
 
-    document.getElementById(
-        "todayVisits"
-    ).textContent =
-        todayVisits;
+    setText(
+        "todayVisits",
+        todayVisits
+    );
 
 
-    document.getElementById(
-        "totalPurchases"
-    ).textContent =
-        purchases;
+    setText(
+        "totalPurchases",
+        purchases
+    );
 
 
-    document.getElementById(
-        "activeStaff"
-    ).textContent =
-        activeStaff;
+    setText(
+        "activeStaff",
+        activeStaff
+    );
 }
 
 
-/* -----------------------------
+/* =========================================================
    STAFF CARDS
------------------------------- */
+========================================================= */
 
 function renderStaffCards() {
 
     const container =
-        document.getElementById(
-            "staffGrid"
-        );
+        $("staffGrid");
+
+
+    if (!container) {
+        return;
+    }
 
 
     container.innerHTML = "";
@@ -670,14 +997,16 @@ function renderStaffCards() {
             const entries =
                 allCustomers.filter(
                     entry =>
-                        entry.staff_id === staff.id
+                        entry.staff_id ===
+                        staff.id
                 );
 
 
             const purchases =
                 entries.filter(
                     entry =>
-                        entry.purchase_status === "yes"
+                        entry.purchase_status ===
+                        "yes"
                 ).length;
 
 
@@ -691,37 +1020,42 @@ function renderStaffCards() {
                 "staff-card";
 
 
+            const initial =
+                getInitial(
+                    staff.full_name ||
+                    "Staff"
+                );
+
+
             card.innerHTML = `
 
                 <div class="staff-head">
 
+
                     <div class="staff-avatar">
-
-                        ${escapeHTML(
-                            (
-                                staff.full_name ||
-                                "S"
-                            )
-                            .charAt(0)
-                            .toUpperCase()
-                        )}
-
+                        ${escapeHTML(initial)}
                     </div>
 
 
                     <div>
 
                         <div class="staff-name">
+
                             ${escapeHTML(
-                                staff.full_name
+                                staff.full_name ||
+                                "Unnamed Staff"
                             )}
+
                         </div>
 
+
                         <div class="staff-mobile">
+
                             ${escapeHTML(
                                 staff.mobile ||
                                 "No mobile number"
                             )}
+
                         </div>
 
                     </div>
@@ -737,10 +1071,12 @@ function renderStaffCards() {
 
                     </div>
 
+
                 </div>
 
 
                 <div class="staff-stats">
+
 
                     <div class="staff-stat">
 
@@ -767,7 +1103,9 @@ function renderStaffCards() {
 
                     </div>
 
+
                 </div>
+
             `;
 
 
@@ -779,9 +1117,9 @@ function renderStaffCards() {
 }
 
 
-/* -----------------------------
-   NAVIGATION
------------------------------- */
+/* =========================================================
+   SIDEBAR NAVIGATION
+========================================================= */
 
 document
     .querySelectorAll(".nav-item")
@@ -792,26 +1130,28 @@ document
                 "click",
                 () => {
 
+                    const sectionId =
+                        button.dataset.section;
+
+
                     openSection(
-                        button.dataset.section
+                        sectionId
                     );
+
 
                     document
                         .querySelectorAll(
                             ".nav-item"
                         )
                         .forEach(
-                            item =>
-                                item.classList
-                                    .remove(
-                                        "active"
-                                    )
+                            navItem => {
+
+                                navItem.classList.toggle(
+                                    "active",
+                                    navItem === button
+                                );
+                            }
                         );
-
-
-                    button.classList.add(
-                        "active"
-                    );
 
 
                     closeMobileSidebar();
@@ -820,6 +1160,10 @@ document
         }
     );
 
+
+/* =========================================================
+   QUICK ACTION NAVIGATION
+========================================================= */
 
 document
     .querySelectorAll(".quick-card")
@@ -844,15 +1188,13 @@ document
                             ".nav-item"
                         )
                         .forEach(
-                            item => {
+                            navItem => {
 
-                                item.classList
-                                    .toggle(
-                                        "active",
-                                        item.dataset.section ===
-                                            target
-                                    );
-
+                                navItem.classList.toggle(
+                                    "active",
+                                    navItem.dataset.section ===
+                                        target
+                                );
                             }
                         );
                 }
@@ -870,10 +1212,12 @@ function openSection(
             ".content-section"
         )
         .forEach(
-            section =>
+            section => {
+
                 section.classList.remove(
                     "active-section"
-                )
+                );
+            }
         );
 
 
@@ -908,69 +1252,76 @@ function openSection(
     };
 
 
-    document.getElementById(
-        "pageTitle"
-    ).textContent =
-        titles[sectionId] ||
-        "Dashboard";
+    const pageTitle =
+        $("pageTitle");
+
+
+    if (pageTitle) {
+
+        pageTitle.textContent =
+            titles[sectionId] ||
+            "Dashboard";
+    }
 }
 
 
-/* -----------------------------
-   FILTER EVENTS
------------------------------- */
+/* =========================================================
+   FILTER BUTTON
+========================================================= */
 
-document
-    .getElementById(
-        "applyFiltersBtn"
-    )
-    .addEventListener(
+$("applyFiltersBtn")
+    ?.addEventListener(
         "click",
         () => {
 
+            const filtered =
+                getFilteredCustomers();
+
+
             renderCustomers(
-                getFilteredCustomers()
+                filtered
             );
         }
     );
 
 
-document
-    .getElementById(
-        "resetFiltersBtn"
-    )
-    .addEventListener(
+/* =========================================================
+   RESET FILTERS
+========================================================= */
+
+$("resetFiltersBtn")
+    ?.addEventListener(
         "click",
         () => {
 
-            document.getElementById(
-                "searchInput"
-            ).value = "";
+            if ($("searchInput")) {
+                $("searchInput").value = "";
+            }
 
 
-            document.getElementById(
-                "fromDate"
-            ).value = "";
+            if ($("fromDate")) {
+                $("fromDate").value = "";
+            }
 
 
-            document.getElementById(
-                "toDate"
-            ).value = "";
+            if ($("toDate")) {
+                $("toDate").value = "";
+            }
 
 
-            document.getElementById(
-                "staffFilter"
-            ).value = "";
+            if ($("staffFilter")) {
+                $("staffFilter").value = "";
+            }
 
 
-            document.getElementById(
-                "reasonFilter"
-            ).value = "";
+            if ($("reasonFilter")) {
+                $("reasonFilter").value = "";
+            }
 
 
-            document.getElementById(
-                "purchaseFilter"
-            ).value = "";
+            if ($("purchaseFilter")) {
+                $("purchaseFilter").value = "";
+            }
 
 
             renderCustomers(
@@ -980,173 +1331,90 @@ document
     );
 
 
-document
-    .getElementById(
-        "searchInput"
-    )
-    .addEventListener(
-        "keydown",
-        event => {
+/* =========================================================
+   LIVE SEARCH
+========================================================= */
 
-            if (
-                event.key === "Enter"
-            ) {
+$("searchInput")
+    ?.addEventListener(
+        "input",
+        () => {
+
+            renderCustomers(
+                getFilteredCustomers()
+            );
+        }
+    );
+
+
+/* =========================================================
+   DATE / SELECT FILTER EVENTS
+========================================================= */
+
+[
+    "fromDate",
+    "toDate",
+    "staffFilter",
+    "reasonFilter",
+    "purchaseFilter"
+]
+.forEach(
+    id => {
+
+        $(id)?.addEventListener(
+            "change",
+            () => {
 
                 renderCustomers(
                     getFilteredCustomers()
                 );
             }
-        }
-    );
+        );
+    }
+);
 
 
-/* -----------------------------
+/* =========================================================
    EXCEL EXPORT
------------------------------- */
+========================================================= */
 
-document
-    .getElementById(
-        "exportCustomersBtn"
-    )
-    .addEventListener(
+$("exportCustomersBtn")
+    ?.addEventListener(
         "click",
-        exportExcel
+        exportCurrentResults
     );
 
 
-document
-    .getElementById(
-        "reportExportBtn"
-    )
-    .addEventListener(
+$("reportExportBtn")
+    ?.addEventListener(
         "click",
-        exportExcel
+        exportCurrentResults
     );
 
 
-function exportExcel() {
+function exportCurrentResults() {
 
-    const customers =
+    const filteredCustomers =
         getFilteredCustomers();
 
 
-    if (!customers.length) {
-
-        alert(
-            "There are no records to export."
-        );
-
-        return;
-    }
-
-
-    const rows =
-        customers.map(
-            entry => {
-
-                const date =
-                    new Date(
-                        entry.created_at
-                    );
-
-
-                return {
-
-                    "Customer Name":
-                        entry.customer_name,
-
-                    "Mobile Number":
-                        entry.mobile,
-
-                    "Gender":
-                        entry.gender,
-
-                    "Visit Reason":
-                        formatReason(
-                            entry.visit_reason
-                        ),
-
-                    "Product":
-                        formatProduct(
-                            entry.product_type
-                        ),
-
-                    "Purchase":
-                        entry.purchase_status === "yes"
-                            ? "Yes"
-                            : "No",
-
-                    "Purchase Details":
-                        entry.purchase_details || "",
-
-                    "Staff":
-                        entry.profiles?.full_name ||
-                        "",
-
-                    "Staff Mobile":
-                        entry.profiles?.mobile ||
-                        "",
-
-                    "Date":
-                        date.toLocaleDateString(
-                            "en-IN"
-                        ),
-
-                    "Time":
-                        date.toLocaleTimeString(
-                            "en-IN",
-                            {
-                                hour: "2-digit",
-                                minute: "2-digit"
-                            }
-                        )
-
-                };
-            }
-        );
-
-
-    const worksheet =
-        XLSX.utils.json_to_sheet(
-            rows
-        );
-
-
-    const workbook =
-        XLSX.utils.book_new();
-
-
-    XLSX.utils.book_append_sheet(
-        workbook,
-        worksheet,
-        "Customers"
-    );
-
-
-    XLSX.writeFile(
-        workbook,
-        `E-Glasses-Customers-${formatFileDate()}.xlsx`
+    exportCustomersToExcel(
+        filteredCustomers
     );
 }
 
 
-/* -----------------------------
-   MOBILE SIDEBAR
------------------------------- */
+/* =========================================================
+   MOBILE MENU
+========================================================= */
 
-document
-    .getElementById(
-        "menuToggle"
-    )
-    .addEventListener(
+$("menuToggle")
+    ?.addEventListener(
         "click",
         () => {
 
-            document
-                .getElementById(
-                    "sidebar"
-                )
-                .classList.toggle(
+            $("sidebar")
+                ?.classList.toggle(
                     "open"
                 );
         }
@@ -1155,39 +1423,72 @@ document
 
 function closeMobileSidebar() {
 
-    document
-        .getElementById(
-            "sidebar"
-        )
-        .classList.remove(
+    $("sidebar")
+        ?.classList.remove(
             "open"
         );
 }
 
 
-/* -----------------------------
+/* =========================================================
    LOGOUT
------------------------------- */
+========================================================= */
 
-document
-    .getElementById(
-        "logoutBtn"
-    )
-    .addEventListener(
+$("logoutBtn")
+    ?.addEventListener(
         "click",
         async () => {
 
-            await supabase.auth.signOut();
+            try {
 
-            window.location.href =
-                "login.html";
+                await supabase.auth.signOut();
+
+            } catch (error) {
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+            }
+
+
+            redirectToLogin();
         }
     );
 
 
-/* -----------------------------
+/* =========================================================
+   AUTH STATE
+========================================================= */
+
+supabase.auth.onAuthStateChange(
+    (
+        event,
+        session
+    ) => {
+
+        if (
+            event === "SIGNED_OUT" ||
+            !session
+        ) {
+
+            if (
+                !window.location.pathname
+                    .endsWith(
+                        "login.html"
+                    )
+            ) {
+
+                redirectToLogin();
+            }
+        }
+    }
+);
+
+
+/* =========================================================
    HELPERS
------------------------------- */
+========================================================= */
 
 function formatReason(
     reason
@@ -1238,7 +1539,54 @@ function formatProduct(
 
     return (
         map[product] ||
+        product ||
         "-"
+    );
+}
+
+
+function formatDate(
+    date
+) {
+
+    if (
+        !(date instanceof Date) ||
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return "-";
+    }
+
+
+    return date.toLocaleDateString(
+        "en-IN"
+    );
+}
+
+
+function formatTime(
+    date
+) {
+
+    if (
+        !(date instanceof Date) ||
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return "-";
+    }
+
+
+    return date.toLocaleTimeString(
+        "en-IN",
+        {
+            hour: "2-digit",
+            minute: "2-digit"
+        }
     );
 }
 
@@ -1252,10 +1600,29 @@ function capitalize(
     }
 
 
-    return value
-        .charAt(0)
-        .toUpperCase() +
-        value.slice(1);
+    const text =
+        String(value);
+
+
+    return (
+        text.charAt(0).toUpperCase() +
+        text.slice(1)
+    );
+}
+
+
+function getInitial(
+    name
+) {
+
+    const text =
+        String(name || "").trim();
+
+
+    return (
+        text.charAt(0).toUpperCase() ||
+        "A"
+    );
 }
 
 
@@ -1289,40 +1656,68 @@ function escapeHTML(
 }
 
 
-function setTableStatus(
+function setText(
+    id,
+    value
+) {
+
+    const element =
+        $(id);
+
+
+    if (element) {
+
+        element.textContent =
+            String(value);
+    }
+}
+
+
+function setStatus(
+    id,
     text
 ) {
 
     const element =
-        document.getElementById(
-            "tableStatus"
-        );
+        $(id);
 
 
     if (element) {
+
         element.textContent =
             text;
     }
 }
 
 
-function formatFileDate() {
+function getErrorMessage(
+    error
+) {
 
-    const now =
-        new Date();
+    if (
+        error &&
+        typeof error.message === "string"
+    ) {
+
+        return error.message;
+    }
 
 
-    return now
-        .toISOString()
-        .slice(
-            0,
-            10
-        );
+    return (
+        "Something went wrong while loading the admin panel."
+    );
 }
 
 
-/* -----------------------------
-   START
------------------------------- */
+function redirectToLogin() {
+
+    window.location.href =
+        "login.html";
+}
+
+
+/* =========================================================
+   START ADMIN APP
+========================================================= */
 
 initializeAdmin();
