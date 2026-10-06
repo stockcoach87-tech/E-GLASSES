@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<meta
+    name="theme-color"
+    content="#0b1020"
+>
+
+<link
+    rel="manifest"
+    href="manifest.json"
+>
+
+<link
+    rel="stylesheet"
+    href="css/style.css"
+>
+
+<title>E-Glasses Staff</title>
+
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand-area">
+
+        <img
+            src="assets/logo.png"
+            class="logo"
+            alt="E-Glasses"
+        >
+
+        <div>
+            <h1>E-Glasses</h1>
+            <span>Staff Panel</span>
+        </div>
+
+    </div>
+
+    <button
+        id="installAppBtn"
+        class="install-btn"
+        hidden
+    >
+        Install App
+    </button>
+
+    <button
+        id="logoutBtn"
+        class="logout-btn"
+    >
+        Logout
+    </button>
+
+</header>
+
+
+<main class="dashboard">
+
+    <section class="welcome-card">
+
+        <div>
+
+            <span class="eyebrow">
+                TODAY
+            </span>
+
+            <h2>
+                Customer Queue
+            </h2>
+
+            <p id="staffName">
+                Loading...
+            </p>
+
+        </div>
+
+        <div class="date-display"
+             id="todayDate">
+        </div>
+
+    </section>
+
+
+    <section
+        id="serviceSelection"
+        class="service-grid"
+    >
+
+        <button
+            class="service-card"
+            data-reason="shopping"
+        >
+            <span class="service-icon">◈</span>
+
+            <strong>Shopping</strong>
+
+            <small>
+                Glasses, sunglasses & contact lens
+            </small>
+        </button>
+
+
+        <button
+            class="service-card"
+            data-reason="eye_test"
+        >
+            <span class="service-icon">◉</span>
+
+            <strong>Eye Test</strong>
+
+            <small>
+                Vision testing
+            </small>
+        </button>
+
+
+        <button
+            class="service-card"
+            data-reason="repair"
+        >
+            <span class="service-icon">⌁</span>
+
+            <strong>Repair</strong>
+
+            <small>
+                Frame & lens repair
+            </small>
+        </button>
+
+
+        <button
+            class="service-card"
+            data-reason="pickup"
+        >
+            <span class="service-icon">✓</span>
+
+            <strong>Pickup</strong>
+
+            <small>
+                Customer pickup
+            </small>
+        </button>
+
+    </section>
+
+
+    <section
+        id="productSelection"
+        class="product-panel hidden"
+    >
+
+        <button
+            id="backToServices"
+            class="back-btn"
+        >
+            ← Back
+        </button>
+
+        <h2>
+            Select Product
+        </h2>
+
+        <div class="product-grid">
+
+            <button
+                class="product-card"
+                data-product="glasses"
+            >
+                <strong>Glasses</strong>
+                <span>Eyeglasses</span>
+            </button>
+
+            <button
+                class="product-card"
+                data-product="sunglasses"
+            >
+                <strong>Sun Glasses</strong>
+                <span>Protective eyewear</span>
+            </button>
+
+            <button
+                class="product-card"
+                data-product="contact_lens"
+            >
+                <strong>Contact Lens</strong>
+                <span>Contact lenses</span>
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <section
+        id="customerFormSection"
+        class="form-panel hidden"
+    >
+
+        <button
+            id="backToPrevious"
+            class="back-btn"
+        >
+            ← Back
+        </button>
+
+        <form id="customerForm">
+
+            <div class="section-heading">
+
+                <span>
+                    CUSTOMER DETAILS
+                </span>
+
+                <h2>
+                    New Customer Entry
+                </h2>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="field">
+
+                    <label>
+                        Customer Name
+                    </label>
+
+                    <input
+                        id="customerName"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        Mobile Number
+                    </label>
+
+                    <input
+                        id="mobile"
+                        type="tel"
+                        inputmode="numeric"
+                        maxlength="10"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        Gender
+                    </label>
+
+                    <select id="gender">
+
+                        <option value="">
+                            Select
+                        </option>
+
+                        <option value="male">
+                            Male
+                        </option>
+
+                        <option value="female">
+                            Female
+                        </option>
+
+                        <option value="other">
+                            Other
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        Purchase
+                    </label>
+
+                    <select id="purchaseStatus">
+
+                        <option value="no">
+                            No
+                        </option>
+
+                        <option value="yes">
+                            Yes
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div
+                    class="field full"
+                    id="purchaseDetailsWrapper"
+                >
+
+                    <label>
+                        Purchase Details
+                    </label>
+
+                    <textarea
+                        id="purchaseDetails"
+                        rows="4"
+                        placeholder="Enter purchase details"
+                    ></textarea>
+
+                </div>
+
+            </div>
+
+
+            <div class="form-actions">
+
+                <button
+                    type="submit"
+                    class="save-btn"
+                >
+                    Save Customer
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+
+    <section class="today-section">
+
+        <div class="section-heading">
+
+            <span>
+                RECENT
+            </span>
+
+            <h2>
+                Today's Customers
+            </h2>
+
+        </div>
+
+        <div id="todayEntries"></div>
+
+    </section>
+
+</main>
+
+<script type="module" src="js/staff.js"></script>
+
+</body>
+</html>
