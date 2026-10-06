@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#080a0f"
+    >
+
+    <title>E-Glasses | Admin Dashboard</title>
+
+    <link
+        rel="stylesheet"
+        href="css/admin.css"
+    >
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+        defer
+    ></script>
+
+    <script
+        src="js/database.js"
+        defer
+    ></script>
+
+    <script
+        src="js/admin.js"
+        defer
+    ></script>
+</head>
+
+<body>
+
+    <!-- =========================
+         APP SHELL
+    ========================== -->
+
+    <div class="app-shell">
+
+        <!-- Mobile Overlay -->
+        <div
+            id="sidebarOverlay"
+            class="sidebar-overlay"
+        ></div>
+
+
+        <!-- =========================
+             SIDEBAR
+        ========================== -->
+
+        <aside
+            id="sidebar"
+            class="sidebar"
+        >
+
+            <div class="sidebar-top">
+
+                <!-- Brand -->
+                <div class="sidebar-brand">
+
+                    <div class="brand-symbol">
+                        EG
+                    </div>
+
+                    <div>
+                        <div class="brand-name">
+                            E-Glasses
+                        </div>
+
+                        <div class="brand-subtitle">
+                            Admin Panel
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <!-- Navigation -->
+
+                <nav class="main-navigation">
+
+                    <button
+                        class="nav-item active"
+                        data-section="dashboard"
+                    >
+                        <span class="nav-icon">⌂</span>
+                        <span>Dashboard</span>
+                    </button>
+
+
+                    <button
+                        class="nav-item"
+                        data-section="customers"
+                    >
+                        <span class="nav-icon">◉</span>
+                        <span>Customers</span>
+                    </button>
+
+
+                    <button
+                        class="nav-item"
+                        data-section="new-customer"
+                    >
+                        <span class="nav-icon">+</span>
+                        <span>New Customer</span>
+                    </button>
+
+
+                    <button
+                        class="nav-item"
+                        data-section="today"
+                    >
+                        <span class="nav-icon">◷</span>
+                        <span>Today's Entries</span>
+                    </button>
+
+
+                    <button
+                        class="nav-item"
+                        data-section="staff"
+                    >
+                        <span class="nav-icon">◎</span>
+                        <span>Staff Management</span>
+                    </button>
+
+
+                    <button
+                        class="nav-item"
+                        data-section="reports"
+                    >
+                        <span class="nav-icon">▥</span>
+                        <span>Reports</span>
+                    </button>
+
+
+                    <button
+                        class="nav-item"
+                        data-section="export"
+                    >
+                        <span class="nav-icon">⇩</span>
+                        <span>Excel Export</span>
+                    </button>
+
+
+                    <button
+                        class="nav-item"
+                        data-section="audit"
+                    >
+                        <span class="nav-icon">◌</span>
+                        <span>Audit History</span>
+                    </button>
+
+                </nav>
+
+            </div>
+
+
+            <!-- Sidebar Bottom -->
+
+            <div class="sidebar-bottom">
+
+                <div class="admin-profile">
+
+                    <div
+                        id="adminAvatar"
+                        class="admin-avatar"
+                    >
+                        A
+                    </div>
+
+                    <div class="admin-profile-info">
+
+                        <strong id="adminName">
+                            Admin
+                        </strong>
+
+                        <span>
+                            Administrator
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    id="logoutButton"
+                    class="logout-button"
+                >
+                    <span>↪</span>
+                    Logout
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <!-- =========================
+             MAIN CONTENT
+        ========================== -->
+
+        <main class="main-content">
+
+            <!-- Topbar -->
+
+            <header class="topbar">
+
+                <div class="topbar-left">
+
+                    <button
+                        id="menuButton"
+                        class="menu-button"
+                        aria-label="Open navigation"
+                    >
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+
+
+                    <div>
+
+                        <div
+                            id="pageEyebrow"
+                            class="page-eyebrow"
+                        >
+                            ADMIN OVERVIEW
+                        </div>
+
+                        <h1 id="pageTitle">
+                            Dashboard
+                        </h1>
+
+                    </div>
+
+                </div>
+
+
+                <div class="topbar-right">
+
+                    <div class="live-status">
+
+                        <span class="status-dot"></span>
+
+                        <span>
+                            System Online
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        id="topbarDate"
+                        class="topbar-date"
+                    ></div>
+
+                </div>
+
+            </header>
+
+
+            <!-- =========================
+                 DASHBOARD SECTION
+            ========================== -->
+
+            <section
+                id="dashboardSection"
+                class="page-section active-section"
+            >
+
+                <div class="welcome-row">
+
+                    <div>
+
+                        <p class="section-label">
+                            E-GLASSES MANAGEMENT
+                        </p>
+
+                        <h2>
+                            Good day, <span id="welcomeName">Admin</span>
+                        </h2>
+
+                        <p class="section-description">
+                            Here's what's happening across your store today.
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        class="primary-button"
+                        data-section="new-customer"
+                    >
+                        <span>+</span>
+                        New Customer
+                    </button>
+
+                </div>
+
+
+                <!-- Stats -->
+
+                <div class="stats-grid">
+
+                    <article class="stat-card">
+
+                        <div class="stat-card-top">
+
+                            <span class="stat-label">
+                                Total Customers
+                            </span>
+
+                            <span class="stat-icon">
+                                ◉
+                            </span>
+
+                        </div>
+
+                        <div
+                            id="totalCustomers"
+                            class="stat-value"
+                        >
+                            —
+                        </div>
+
+                        <div class="stat-meta">
+                            All recorded customers
+                        </div>
+
+                    </article>
+
+
+                    <article class="stat-card">
+
+                        <div class="stat-card-top">
+
+                            <span class="stat-label">
+                                Today's Entries
+                            </span>
+
+                            <span class="stat-icon">
+                                ◷
+                            </span>
+
+                        </div>
+
+                        <div
+                            id="todayCustomers"
+                            class="stat-value"
+                        >
+                            —
+                        </div>
+
+                        <div class="stat-meta">
+                            Created today
+                        </div>
+
+                    </article>
+
+
+                    <article class="stat-card">
+
+                        <div class="stat-card-top">
+
+                            <span class="stat-label">
+                                Active Staff
+                            </span>
+
+                            <span class="stat-icon">
+                                ◎
+                            </span>
+
+                        </div>
+
+                        <div
+                            id="activeStaff"
+                            class="stat-value"
+                        >
+                            —
+                        </div>
+
+                        <div class="stat-meta">
+                            Staff accounts active
+                        </div>
+
+                    </article>
+
+
+                    <article class="stat-card">
+
+                        <div class="stat-card-top">
+
+                            <span class="stat-label">
+                                Shopping Visits
+                            </span>
+
+                            <span class="stat-icon">
+                                ◇
+                            </span>
+
+                        </div>
+
+                        <div
+                            id="shoppingCustomers"
+                            class="stat-value"
+                        >
+                            —
+                        </div>
+
+                        <div class="stat-meta">
+                            All shopping entries
+                        </div>
+
+                    </article>
+
+                </div>
+
+
+                <!-- Dashboard lower area -->
+
+                <div class="dashboard-grid">
+
+                    <!-- Recent Customers -->
+
+                    <section class="panel-card large-panel">
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <p class="section-label">
+                                    CUSTOMER ACTIVITY
+                                </p>
+
+                                <h3>
+                                    Recent Customers
+                                </h3>
+
+                            </div>
+
+                            <button
+                                class="text-button"
+                                data-section="customers"
+                            >
+                                View all
+                            </button>
+
+                        </div>
+
+
+                        <div
+                            id="recentCustomers"
+                            class="table-wrapper"
+                        >
+
+                            <div class="loading-state">
+                                Loading customers...
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- Quick Actions -->
+
+                    <section class="panel-card">
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <p class="section-label">
+                                    SHORTCUTS
+                                </p>
+
+                                <h3>
+                                    Quick Actions
+                                </h3>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="quick-actions">
+
+                            <button
+                                class="quick-action"
+                                data-section="new-customer"
+                            >
+                                <span class="quick-icon">
+                                    +
+                                </span>
+
+                                <span>
+                                    <strong>
+                                        Add Customer
+                                    </strong>
+
+                                    <small>
+                                        Create a new entry
+                                    </small>
+                                </span>
+
+                                <span class="quick-arrow">
+                                    →
+                                </span>
+                            </button>
+
+
+                            <button
+                                class="quick-action"
+                                data-section="customers"
+                            >
+                                <span class="quick-icon">
+                                    ◉
+                                </span>
+
+                                <span>
+                                    <strong>
+                                        Customers
+                                    </strong>
+
+                                    <small>
+                                        Browse customer records
+                                    </small>
+                                </span>
+
+                                <span class="quick-arrow">
+                                    →
+                                </span>
+                            </button>
+
+
+                            <button
+                                class="quick-action"
+                                data-section="staff"
+                            >
+                                <span class="quick-icon">
+                                    ◎
+                                </span>
+
+                                <span>
+                                    <strong>
+                                        Staff
+                                    </strong>
+
+                                    <small>
+                                        Manage staff accounts
+                                    </small>
+                                </span>
+
+                                <span class="quick-arrow">
+                                    →
+                                </span>
+                            </button>
+
+
+                            <button
+                                class="quick-action"
+                                data-section="export"
+                            >
+                                <span class="quick-icon">
+                                    ⇩
+                                </span>
+
+                                <span>
+                                    <strong>
+                                        Export Data
+                                    </strong>
+
+                                    <small>
+                                        Download customer data
+                                    </small>
+                                </span>
+
+                                <span class="quick-arrow">
+                                    →
+                                </span>
+                            </button>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+            </section>
+
+
+            <!-- =========================
+                 PLACEHOLDER SECTIONS
+            ========================== -->
+
+            <section
+                id="customersSection"
+                class="page-section"
+            >
+
+                <div class="empty-section-card">
+
+                    <div class="empty-icon">
+                        ◉
+                    </div>
+
+                    <p class="section-label">
+                        CUSTOMER MANAGEMENT
+                    </p>
+
+                    <h2>
+                        Customers
+                    </h2>
+
+                    <p>
+                        Customer search, filters and complete records
+                        will be available here.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <section
+                id="new-customerSection"
+                class="page-section"
+            >
+
+                <div class="empty-section-card">
+
+                    <div class="empty-icon">
+                        +
+                    </div>
+
+                    <p class="section-label">
+                        CUSTOMER ENTRY
+                    </p>
+
+                    <h2>
+                        New Customer
+                    </h2>
+
+                    <p>
+                        Customer entry form will be added here.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <section
+                id="todaySection"
+                class="page-section"
+            >
+
+                <div class="empty-section-card">
+
+                    <div class="empty-icon">
+                        ◷
+                    </div>
+
+                    <p class="section-label">
+                        TODAY
+                    </p>
+
+                    <h2>
+                        Today's Entries
+                    </h2>
+
+                    <p>
+                        Today's customer queue and entries will appear here.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <section
+                id="staffSection"
+                class="page-section"
+            >
+
+                <div class="empty-section-card">
+
+                    <div class="empty-icon">
+                        ◎
+                    </div>
+
+                    <p class="section-label">
+                        TEAM MANAGEMENT
+                    </p>
+
+                    <h2>
+                        Staff Management
+                    </h2>
+
+                    <p>
+                        Staff accounts, status and activity will be managed here.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <section
+                id="reportsSection"
+                class="page-section"
+            >
+
+                <div class="empty-section-card">
+
+                    <div class="empty-icon">
+                        ▥
+                    </div>
+
+                    <p class="section-label">
+                        REPORTING
+                    </p>
+
+                    <h2>
+                        Reports
+                    </h2>
+
+                    <p>
+                        Customer and staff reports will be available here.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <section
+                id="exportSection"
+                class="page-section"
+            >
+
+                <div class="empty-section-card">
+
+                    <div class="empty-icon">
+                        ⇩
+                    </div>
+
+                    <p class="section-label">
+                        DATA EXPORT
+                    </p>
+
+                    <h2>
+                        Excel Export
+                    </h2>
+
+                    <p>
+                        Advanced Excel export and custom date filtering will be added here.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <section
+                id="auditSection"
+                class="page-section"
+            >
+
+                <div class="empty-section-card">
+
+                    <div class="empty-icon">
+                        ◌
+                    </div>
+
+                    <p class="section-label">
+                        SECURITY
+                    </p>
+
+                    <h2>
+                        Audit History
+                    </h2>
+
+                    <p>
+                        Staff activity and customer history will be shown here.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+        </main>
+
+    </div>
+
+</body>
+</html>
