@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#080b14"
+    >
+
+    <link
+        rel="manifest"
+        href="manifest.json"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/admin.css"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <title>E-Glasses Admin Dashboard</title>
+
+</head>
+
+
+<body>
+
+<div class="admin-shell">
+
+
+    <!-- SIDEBAR -->
+
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >
+
+        <div class="sidebar-brand">
+
+            <img
+                src="assets/logo.png"
+                alt="E-Glasses"
+                class="sidebar-logo"
+            >
+
+            <div>
+
+                <h1>E-Glasses</h1>
+
+                <span>
+                    Admin Console
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+            <button
+                class="nav-item active"
+                data-section="dashboardSection"
+            >
+                <span class="nav-icon">▦</span>
+                <span>Dashboard</span>
+            </button>
+
+
+            <button
+                class="nav-item"
+                data-section="customersSection"
+            >
+                <span class="nav-icon">◉</span>
+                <span>Customers</span>
+            </button>
+
+
+            <button
+                class="nav-item"
+                data-section="staffSection"
+            >
+                <span class="nav-icon">◌</span>
+                <span>Staff</span>
+            </button>
+
+
+            <button
+                class="nav-item"
+                data-section="reportsSection"
+            >
+                <span class="nav-icon">▤</span>
+                <span>Reports</span>
+            </button>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <a
+                href="privacy.html"
+                class="sidebar-link"
+            >
+                Privacy Policy
+            </a>
+
+
+            <button
+                id="logoutBtn"
+                class="sidebar-link logout-link"
+            >
+                Logout
+            </button>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- MAIN -->
+
+    <main class="main-content">
+
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <button
+                id="menuToggle"
+                class="mobile-menu-btn"
+                aria-label="Open menu"
+            >
+                ☰
+            </button>
+
+
+            <div>
+
+                <p class="topbar-eyebrow">
+                    E-GLASSES MANAGEMENT
+                </p>
+
+                <h2 id="pageTitle">
+                    Dashboard
+                </h2>
+
+            </div>
+
+
+            <div class="admin-profile">
+
+                <div class="admin-avatar">
+                    A
+                </div>
+
+                <div>
+
+                    <strong id="adminName">
+                        Admin
+                    </strong>
+
+                    <span>
+                        Administrator
+                    </span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- DASHBOARD -->
+
+        <section
+            id="dashboardSection"
+            class="content-section active-section"
+        >
+
+
+            <div class="hero-banner">
+
+                <div>
+
+                    <span class="hero-label">
+                        TODAY'S OVERVIEW
+                    </span>
+
+                    <h1>
+                        Customer Intelligence
+                    </h1>
+
+                    <p>
+                        Monitor customer visits,
+                        purchases and staff activity
+                        from one place.
+                    </p>
+
+                </div>
+
+
+                <div class="hero-date">
+
+                    <span id="currentDate">
+                        --
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- STAT CARDS -->
+
+            <div class="stats-grid">
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+
+                        <span class="stat-label">
+                            Total Customers
+                        </span>
+
+                        <span class="stat-icon">
+                            ◉
+                        </span>
+
+                    </div>
+
+                    <strong
+                        id="totalCustomers"
+                        class="stat-value"
+                    >
+                        0
+                    </strong>
+
+                    <span class="stat-foot">
+                        All recorded visits
+                    </span>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+
+                        <span class="stat-label">
+                            Today's Visits
+                        </span>
+
+                        <span class="stat-icon cyan">
+                            ◌
+                        </span>
+
+                    </div>
+
+                    <strong
+                        id="todayVisits"
+                        class="stat-value"
+                    >
+                        0
+                    </strong>
+
+                    <span class="stat-foot">
+                        Current business day
+                    </span>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+
+                        <span class="stat-label">
+                            Purchases
+                        </span>
+
+                        <span class="stat-icon green">
+                            ✓
+                        </span>
+
+                    </div>
+
+                    <strong
+                        id="totalPurchases"
+                        class="stat-value"
+                    >
+                        0
+                    </strong>
+
+                    <span class="stat-foot">
+                        Purchase confirmed
+                    </span>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+
+                        <span class="stat-label">
+                            Active Staff
+                        </span>
+
+                        <span class="stat-icon orange">
+                            ●
+                        </span>
+
+                    </div>
+
+                    <strong
+                        id="activeStaff"
+                        class="stat-value"
+                    >
+                        0
+                    </strong>
+
+                    <span class="stat-foot">
+                        Active accounts
+                    </span>
+
+                </article>
+
+            </div>
+
+
+
+            <!-- QUICK ACTIONS -->
+
+            <div class="section-header">
+
+                <div>
+
+                    <span class="section-kicker">
+                        MANAGEMENT
+                    </span>
+
+                    <h3>
+                        Quick Actions
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="quick-grid">
+
+                <button
+                    class="quick-card"
+                    data-target="customersSection"
+                >
+
+                    <div class="quick-icon purple">
+                        ◉
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Customer Records
+                        </strong>
+
+                        <span>
+                            Search and filter all customer entries
+                        </span>
+
+                    </div>
+
+                    <b>→</b>
+
+                </button>
+
+
+                <button
+                    class="quick-card"
+                    data-target="staffSection"
+                >
+
+                    <div class="quick-icon cyan">
+                        ◌
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Staff Management
+                        </strong>
+
+                        <span>
+                            Review staff accounts and activity
+                        </span>
+
+                    </div>
+
+                    <b>→</b>
+
+                </button>
+
+
+                <button
+                    class="quick-card"
+                    data-target="reportsSection"
+                >
+
+                    <div class="quick-icon green">
+                        ▤
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Export Reports
+                        </strong>
+
+                        <span>
+                            Download filtered data in Excel format
+                        </span>
+
+                    </div>
+
+                    <b>→</b>
+
+                </button>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- CUSTOMERS -->
+
+        <section
+            id="customersSection"
+            class="content-section"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <span class="section-kicker">
+                        CUSTOMER DATABASE
+                    </span>
+
+                    <h3>
+                        Customer Records
+                    </h3>
+
+                    <p>
+                        Search, filter and export customer activity.
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="exportCustomersBtn"
+                    class="primary-btn"
+                >
+                    Download Excel
+                </button>
+
+            </div>
+
+
+            <!-- FILTER PANEL -->
+
+            <div class="filter-card">
+
+                <div class="filter-grid">
+
+
+                    <div class="filter-field">
+
+                        <label>
+                            Search
+                        </label>
+
+                        <input
+                            id="searchInput"
+                            type="search"
+                            placeholder="Name or mobile number"
+                        >
+
+                    </div>
+
+
+                    <div class="filter-field">
+
+                        <label>
+                            From Date
+                        </label>
+
+                        <input
+                            id="fromDate"
+                            type="date"
+                        >
+
+                    </div>
+
+
+                    <div class="filter-field">
+
+                        <label>
+                            To Date
+                        </label>
+
+                        <input
+                            id="toDate"
+                            type="date"
+                        >
+
+                    </div>
+
+
+                    <div class="filter-field">
+
+                        <label>
+                            Staff
+                        </label>
+
+                        <select id="staffFilter">
+
+                            <option value="">
+                                All Staff
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="filter-field">
+
+                        <label>
+                            Visit Reason
+                        </label>
+
+                        <select id="reasonFilter">
+
+                            <option value="">
+                                All Reasons
+                            </option>
+
+                            <option value="shopping">
+                                Shopping
+                            </option>
+
+                            <option value="eye_test">
+                                Eye Test
+                            </option>
+
+                            <option value="repair">
+                                Repair
+                            </option>
+
+                            <option value="pickup">
+                                Pickup
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="filter-field">
+
+                        <label>
+                            Purchase
+                        </label>
+
+                        <select id="purchaseFilter">
+
+                            <option value="">
+                                All
+                            </option>
+
+                            <option value="yes">
+                                Yes
+                            </option>
+
+                            <option value="no">
+                                No
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="filter-actions">
+
+                    <button
+                        id="applyFiltersBtn"
+                        class="primary-btn"
+                    >
+                        Apply Filters
+                    </button>
+
+                    <button
+                        id="resetFiltersBtn"
+                        class="secondary-btn"
+                    >
+                        Reset
+                    </button>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- TABLE -->
+
+            <div class="table-card">
+
+                <div class="table-toolbar">
+
+                    <div>
+
+                        <strong>
+                            Customer Entries
+                        </strong>
+
+                        <span id="resultCount">
+                            0 records
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        id="tableStatus"
+                        class="table-status"
+                    >
+                        Ready
+                    </div>
+
+                </div>
+
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Customer
+                                </th>
+
+                                <th>
+                                    Mobile
+                                </th>
+
+                                <th>
+                                    Gender
+                                </th>
+
+                                <th>
+                                    Reason
+                                </th>
+
+                                <th>
+                                    Product
+                                </th>
+
+                                <th>
+                                    Purchase
+                                </th>
+
+                                <th>
+                                    Staff
+                                </th>
+
+                                <th>
+                                    Date
+                                </th>
+
+                                <th>
+                                    Time
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody
+                            id="customersTableBody"
+                        >
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- STAFF -->
+
+        <section
+            id="staffSection"
+            class="content-section"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <span class="section-kicker">
+                        TEAM
+                    </span>
+
+                    <h3>
+                        Staff Management
+                    </h3>
+
+                    <p>
+                        Monitor staff accounts and customer activity.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="staffGrid"
+                class="staff-grid"
+            >
+
+                <div class="loading-card">
+                    Loading staff...
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- REPORTS -->
+
+        <section
+            id="reportsSection"
+            class="content-section"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <span class="section-kicker">
+                        REPORTING
+                    </span>
+
+                    <h3>
+                        Reports & Export
+                    </h3>
+
+                    <p>
+                        Build custom reports and export customer data.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="report-card">
+
+                <div class="report-icon">
+                    ▤
+                </div>
+
+                <div>
+
+                    <h4>
+                        Customer Excel Export
+                    </h4>
+
+                    <p>
+                        Use the customer filters to prepare
+                        a custom report and download the results.
+                    </p>
+
+                    <button
+                        id="reportExportBtn"
+                        class="primary-btn"
+                    >
+                        Export Excel
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+</div>
+
+
+<!-- SheetJS -->
+
+<script
+    src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js">
+</script>
+
+
+<script
+    type="module"
+    src="js/admin.js"
+></script>
+
+
+</body>
+</html>
