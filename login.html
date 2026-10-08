@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -8,84 +10,357 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <meta name="theme-color" content="#0b1020">
+    <meta
+        name="theme-color"
+        content="#070a12"
+    >
+
+    <meta
+        name="mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
+    >
+
+    <meta
+        name="apple-mobile-web-app-title"
+        content="E-Glasses"
+    >
+
 
     <link
         rel="manifest"
         href="manifest.json"
     >
 
+
+    <link
+        rel="apple-touch-icon"
+        href="assets/icon-192.png"
+    >
+
+
     <link
         rel="stylesheet"
         href="css/login.css"
     >
 
-    <title>E-Glasses Login</title>
+
+    <title>
+        E-Glasses Login
+    </title>
+
 </head>
+
 
 <body>
 
-<div class="login-wrapper">
 
-    <div class="login-card">
+<main class="login-page">
 
-        <div class="brand">
-            <img
-                src="assets/logo.png"
-                alt="E-Glasses"
-            >
 
-            <h1>E-Glasses</h1>
+    <section class="login-card">
+
+
+        <!-- BRAND -->
+
+        <div class="brand-section">
+
+
+            <div class="logo-box">
+
+                <img
+                    src="assets/logo.png"
+                    alt="E-Glasses"
+                    class="brand-logo"
+                    onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='grid';"
+                >
+
+                <div
+                    id="logoFallback"
+                    class="logo-fallback"
+                >
+                    EG
+                </div>
+
+            </div>
+
+
+            <h1>
+                E-GLASSES
+            </h1>
+
 
             <p>
                 Customer Management System
             </p>
+
+
         </div>
 
-        <form id="loginForm">
 
-            <div class="input-group">
-                <label>Email</label>
 
-                <input
-                    type="email"
-                    id="email"
-                    required
-                    autocomplete="username"
-                >
+        <!-- ROLE SELECTION -->
+
+        <div
+            id="roleSelection"
+            class="role-selection"
+        >
+
+
+            <div class="section-label">
+                CHOOSE LOGIN TYPE
             </div>
 
-            <div class="input-group">
-                <label>Password</label>
 
-                <input
-                    type="password"
-                    id="password"
-                    required
-                    autocomplete="current-password"
+            <h2>
+                Welcome back
+            </h2>
+
+
+            <p class="section-description">
+                Select your workspace to continue.
+            </p>
+
+
+
+            <div class="role-options">
+
+
+                <!-- ADMIN -->
+
+                <button
+                    type="button"
+                    class="role-option admin-option"
+                    data-role="admin"
                 >
+
+
+                    <div class="role-symbol">
+                        A
+                    </div>
+
+
+                    <div class="role-text">
+
+                        <strong>
+                            Admin Login
+                        </strong>
+
+                        <span>
+                            Dashboard, customers,
+                            staff and reports
+                        </span>
+
+                    </div>
+
+
+                    <span class="role-arrow">
+                        →
+                    </span>
+
+
+                </button>
+
+
+
+                <!-- STAFF -->
+
+                <button
+                    type="button"
+                    class="role-option staff-option"
+                    data-role="staff"
+                >
+
+
+                    <div class="role-symbol">
+                        S
+                    </div>
+
+
+                    <div class="role-text">
+
+                        <strong>
+                            Staff Login
+                        </strong>
+
+                        <span>
+                            Today's customer
+                            entries and services
+                        </span>
+
+                    </div>
+
+
+                    <span class="role-arrow">
+                        →
+                    </span>
+
+
+                </button>
+
+
             </div>
+
+
+        </div>
+
+
+
+        <!-- LOGIN FORM -->
+
+        <div
+            id="loginSection"
+            class="login-section hidden"
+        >
+
 
             <button
-                type="submit"
-                class="primary-btn"
+                id="backToRoles"
+                type="button"
+                class="back-button"
             >
-                Sign In
+                ← Change login type
             </button>
 
-        </form>
 
-        <p id="loginError"></p>
+            <div class="selected-role">
 
-        <a href="privacy.html">
-            Privacy Policy
-        </a>
 
-    </div>
+                <div
+                    id="selectedRoleIcon"
+                    class="selected-role-icon"
+                >
+                    A
+                </div>
 
-</div>
 
-<script type="module" src="js/auth.js"></script>
+                <div>
+
+                    <span>
+                        SIGNING IN AS
+                    </span>
+
+                    <strong
+                        id="selectedRoleName"
+                    >
+                        Admin
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+
+
+            <form
+                id="loginForm"
+                novalidate
+            >
+
+
+                <div class="input-group">
+
+                    <label for="email">
+                        Email Address
+                    </label>
+
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="Enter your email"
+                        autocomplete="username"
+                        required
+                    >
+
+                </div>
+
+
+
+                <div class="input-group">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                </div>
+
+
+
+                <button
+                    type="submit"
+                    class="sign-in-button"
+                    id="signInButton"
+                >
+                    Sign In
+                </button>
+
+
+            </form>
+
+
+            <p
+                id="loginError"
+                class="login-error"
+            ></p>
+
+
+        </div>
+
+
+
+        <!-- FOOTER -->
+
+        <div class="login-footer">
+
+            <a href="privacy.html">
+                Privacy Policy
+            </a>
+
+            <span>
+                •
+            </span>
+
+            <span>
+                E-Glasses
+            </span>
+
+        </div>
+
+
+    </section>
+
+
+</main>
+
+
+<script
+    type="module"
+    src="js/auth.js"
+></script>
+
 
 </body>
+
 </html>
